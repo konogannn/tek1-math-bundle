@@ -1,0 +1,215 @@
+#!/usr/bin/env python3
+
+from math import sqrt
+from sys import argv
+import csv
+
+# Global list to store years from 1960 to 2017
+years = []
+
+# Function to check command-line arguments
+def checkargs():
+    # Check if only '-h' flag is provided
+    if len(argv) == 2 and argv[1] == '-h':
+        print("USAGE\n\t./105demography [code]+\n")
+        print("DESCRIPTION")
+        print("\tcode\ncountry code")
+        exit(0)
+
+    # Check for the number of arguments
+    if len(argv) < 2:
+        print("error: invalid amount of argument.")
+        exit(84)
+
+# Function to retrieve country codes from command-line arguments
+def get_country():
+    countrylist = []
+    for code in argv[1:]:
+        countrylist.append(code)
+    return countrylist
+
+# Function to fetch information for provided country codes from CSV file
+def get_infos(countrylist):
+    infos = []
+    buffer = []
+
+    # Open and read the CSV file
+    with open("105demography_data.csv", 'r') as csv_file:
+        csv_reader = list(csv.reader(csv_file, delimiter='\n'))
+        for line in csv_reader:
+            for code in countrylist:
+                if (line[0].split(';')[1] == code):
+                    for i in line[0].split(';'):
+                        buffer.append(i)
+                    infos.append(buffer)
+                    buffer = []
+    # Check if information for all country codes is fetched
+    if (len(infos) != len(countrylist)):
+        print("error: this country code is not currently supported yet.")
+        exit(84)
+    return infos
+
+# Function to print country names based on the fetched information
+def countrynames(infos):
+    name = ""
+    for line in infos:
+        if (name == ""):
+            name = line[0]
+        else:
+            name += ", " + line[0]
+    print("Country: %s" %(name))
+
+# Function to populate years list from 1960 to 2017
+def get_years():
+    global years
+    for year in range(1960, 2018, 1):
+        years.append(year)
+
+# Function to compute total data for each year
+def total_data(infos):
+    total = [0] * 58
+    for i in range(0, len(infos), 1):
+        for j in range(2, len(infos[i]), 1):
+            try:
+                total[j - 2] += int(infos[i][j])
+            except:
+                print(f"error: invalid value '{infos[i][j]}' encountered.")
+                exit(84)
+    return total
+
+# Function to calculate sums for fit1
+def calc_sum1(data):
+    sum = [0, 0, 0, 0]
+
+    for i in range(0, len(data), 1):
+        sum[0] += data[i]
+        sum[1] += years[i]
+        sum[2] += pow(years[i], 2)
+        sum[3] += data[i] * years[i]
+
+    return sum
+
+# Function to calculate sums for fit2
+def calc_sum2(data):
+    sum = [0, 0, 0, 0]
+
+    for i in range(0, len(data)):
+        sum[0] += years[i]
+        sum[1] += data[i]
+        sum[2] += data[i] ** 2
+        sum[3] += data[i] * years[i]
+
+    return sum
+
+# Function to compute coefficients for linear regression (fit1 and fit2)
+def get_coef(sum):
+
+    try:
+        coef1 = ((len(years) * sum[3]) - (sum[0] * sum[1])) / ((len(years) * sum[2]) - pow(sum[1], 2))
+        coef2 = (sum[0] * sum[2] - sum[1] * sum[3]) / (len(years) * sum[2] - (sum[1] ** 2))
+    except:
+        print("error: invalid operand for coefficient calculation.")
+        exit(84)
+
+    return coef1, coef2
+
+
+# Function for linear regression fit1
+def fit1(data):
+    print("Fit1")
+    sum = calc_sum1(data)
+    coef1, coef2 = get_coef(sum)
+    res = 0
+
+    if coef2 < 0:
+        print("\tY =", "{:.2f}".format(coef1 / 1000000), "X -", "{:.2f}".format(coef2 / 1000000 * -1))
+        y = ((coef1 / 1000000) * 2050) - (coef2 / 1000000 * -1)
+    else:
+        print("\tY =", "{:.2f}".format(coef1 / 1000000), "X +", "{:.2f}".format(coef2 / 1000000))
+        y = ((coef1 / 1000000) * 2050) + (coef2 / 1000000)
+
+    for i in range(0, len(data)):
+        temp = years[i] * coef1 + coef2
+        res += ((temp - data[i]) ** 2 / len(data))
+
+    rms = sqrt(res) / 1000000
+    pop  = (2050 * coef1 + coef2) / 1000000
+
+    print("\tRoot-mean-square deviation:", format(rms, ".2f"))
+    print("\tPopulation in 2050:", format(pop, ".2f"))
+
+    return coef1, coef2
+
+# Function for linear regression fit2
+def fit2(data):
+    print("Fit2")
+    sum = calc_sum2(data)
+    coef1, coef2 = get_coef(sum)
+    res = 0
+
+    if coef2 < 0:
+        print("\tX =", "{:.2f}".format(coef1 * 1000000),"Y -", "{:.2f}".format(coef2 * -1))
+    else:
+        print("\tX =", "{:.2f}".format(coef1 * 1000000),"Y +", "{:.2f}".format(coef2))
+
+    for i in range(0, len(data)):
+        temp = (years[i] - coef2) / coef1
+        res += ((temp - data[i]) ** 2 / len(data))
+
+    rms = sqrt(res) / 1000000
+    pop = (2050 - coef2) / coef1 / 1000000
+
+    print("\tRoot-mean-square deviation:", "{:.2f}".format(rms))
+    print("\tPopulation in 2050:", "{:.2f}".format(pop))
+
+# This function calculates values based on the linear regression fit1
+def calcf(coef1, coef2):
+
+    result = []
+
+    if coef2 < 0:
+        for year in range (1960, 2018):
+            result.append(((coef1 / 1000000) * year) - (coef2 / 1000000 * -1))
+    else:
+        for year in range (1960, 2018):
+            result.append(((coef1 / 1000000) * year) + (coef2 / 1000000))
+
+    return result
+
+# Function to compute correlation between two variables
+def correlation(total, coef1, coef2):
+
+    try:
+        mean_t = (sum(total) / 1000000) / len(total)
+    except:
+        print(f"error: invalid operand '{len(total)}'.")
+        exit(84)
+
+    f = calcf(coef1, coef2)
+
+    num = 0
+    den = 0
+
+    for i in range(len(total)):
+        num += (f[i] - mean_t) ** 2 # Calculate the numerator
+        den += ((total[i] / 1000000) - mean_t) ** 2 # Calculate the denominator
+
+    try:
+        corr = (num / den) ** 0.5
+    except:
+        print(f"error: invalid operand '{den}'.")
+        exit(84)
+
+    print("Correlation:", "{:.4f}".format(corr))
+
+
+# Main execution starts here
+checkargs()
+countrylist = get_country()
+infos = get_infos(countrylist)
+countrynames(infos)
+get_years()
+total = total_data(infos)
+coef1, coef2 = fit1(total)
+fit2(total)
+correlation(total, coef1, coef2)

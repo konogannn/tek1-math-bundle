@@ -1,0 +1,31 @@
+[[test]]
+name = "test help menu"
+command = "./105demography -h"
+expected.stdout = 'USAGE\n\t./105demography [code]+\n\nDESCRIPTION\n\tcode\ncountry code'
+expected.stderr = ""
+expected.exit_code = 0
+[[test]]
+
+[[test]]
+name = "test no arg"
+command = "./105demography"
+expected.stdout = 'error: invalid amount of argument.\n'
+expected.stderr = ""
+expected.exit_code = 84
+[[test]]
+
+[[test]]
+name = "test EUU"
+command = "./105demography EUU"
+expected.stdout = 'Country: European Union\nFit1\n\tY = 1.62 X - 2749.67\n\tRoot-mean-square deviation: 5.22\n\tPopulation in 2050: 570.85\nFit2\n\tX = 0.60 Y + 1707.97\n\tRoot-mean-square deviation: 5.32\n\tPopulation in 2050: 574.54\nCorrelation: 0.9820\n'
+expected.stderr = ""
+expected.exit_code = 0
+[[test]]
+
+[[test]]
+name = "test BRA BOL PER"
+command = "./105demography BRA BOL PER"
+expected.stdout = 'Country: Bolivia, Brazil, Peru\nFit1\n\tY = 3.06 X - 5906.34\n\tRoot-mean-square deviation: 2.22\n\tPopulation in 2050: 359.35\nFit2\n\tX = 0.33 Y + 1932.53\n\tRoot-mean-square deviation: 2.22\n\tPopulation in 2050: 359.70\nCorrelation: 0.9991\n'
+expected.stderr = ""
+expected.exit_code = 0
+[[test]]
