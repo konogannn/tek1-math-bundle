@@ -1,6 +1,8 @@
 # First-Year Math Projects
 
-Welcome to our repository containing all our math projects from our first year of EPITECH. This collection includes various assignments, projects, and exercises that we have completed, demonstrating our understanding and application of key mathematical concepts.
+Welcome to our repository containing all our math projects from our first year at EPITECH. This collection includes various assignments, projects, and exercises that we have completed, demonstrating our understanding and application of key mathematical concepts.
+
+We are proud to share that we achieved a **grade A** in both semesters.
 
 ## Table of Contents
 
