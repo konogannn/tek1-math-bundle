@@ -1,0 +1,83 @@
+#!/usr/bin/python3
+
+from math import *
+import sys
+import matplotlib.pyplot as plt
+
+def to_int(arg):
+    try:
+        return int(arg)
+    except ValueError:
+        print("Error: Invalid integer argument.")
+        exit(84)
+
+def to_float(arg):
+    try:
+        return float(arg)
+    except ValueError:
+        print("Error: Invalid float argument.")
+        exit(84)
+
+if len(sys.argv) < 3 or len(sys.argv) > 4 or sys.argv[1] == '-h':
+    print("USAGE\n\t./106bombyx n [k | i0 i1]\n")
+    print("DESCRIPTION")
+    print("\tn\tnumber of first generation individuals")
+    print("\tk\tgrowth rate from 1 to 4")
+    print("\ti0\tinitial generation (included)")
+    print("\ti1\tfinal generation (included)")
+    exit(84)
+
+def single_generation_case():
+    n = to_int(sys.argv[1])
+    if n < 1:
+        exit(84)
+    k = to_float(sys.argv[2])
+    if k < 1 or k > 4:
+        exit(84)
+    xm = n
+    generations = []
+    for loop in range(100):
+        generations.append(xm)
+        xm = k * xm * (1000 - xm) / 1000
+
+    plt.plot(range(1, 101), generations)
+    plt.xlabel('Génération')
+    plt.ylabel('Population')
+    plt.title('Nombre de papillons en fonction de la génération')
+    plt.show()
+
+def range_of_generations_case():
+    n = to_int(sys.argv[1])
+    if n < 1:
+        exit(84)
+    x1 = to_int(sys.argv[2])
+    x2 = to_int(sys.argv[3])
+    if x2 < 0 or x1 < 0:
+        exit(84)
+    xm = n
+    k = 1.00
+    if x1 > x2:
+        exit(84)
+    while k <= 4:
+        populations = []
+        for i in range(1, x1):
+            xm = (k * xm) * (1000 - xm) / 1000
+        while x1 <= x2:
+            populations.append(xm)
+            xm = (k * xm) * (1000 - xm) / 1000
+            x1 += 1
+        plt.plot([k] * len(populations), populations, label=f'c = {round(k, 2)}')
+        xm = to_int(sys.argv[1])
+        x1 = to_int(sys.argv[2])
+        k += 0.01
+
+    plt.xlabel('Taux de croissance (c)')
+    plt.ylabel('Population')
+    plt.title('Nombre de papillons en fonction du taux de croissance')
+    plt.legend()
+    plt.show()
+
+if len(sys.argv) == 3:
+    single_generation_case()
+elif len(sys.argv) == 4:
+    range_of_generations_case()

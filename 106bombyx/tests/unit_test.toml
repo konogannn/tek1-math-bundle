@@ -1,0 +1,15 @@
+[[test]]
+name = "n°1 - help menu"
+command = "./106bombyx -h"
+expected.stdout = 'USAGE\n\t./106bombyx n [k | i0 i1]\n\nDESCRIPTION\n\tn\tnumber of first generation individuals\n\tk\tgrowth rate from 1 to 4\n\ti0\tinitial generation (included)\n\ti1\tfinal generation (included)\n'
+expected.stderr = ""
+expected.exit_code = 0
+[[test]]
+
+[[test]]
+name = "n°2 - no arg"
+command = "./106bombyx"
+expected.stdout = 'error: invalid amount of argument.\n'
+expected.stderr = ""
+expected.exit_code = 84
+[[test]]
