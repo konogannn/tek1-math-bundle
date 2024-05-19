@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+
+from math import sin, pi
+from sys import argv
+
+HELP_FLAG = "-h"
+
+def print_help():
+    print("USAGE")
+    print("\t./110borwein n\n")
+    print("DESCRIPTION")
+    print("\tn\tconstant defining the integral to be computed")
+
+def check_args():
+    if (len(argv) != 2):
+        print_help()
+        exit(84)
+    if (argv[1] == HELP_FLAG):
+        print_help()
+        exit(0)
+    if (not argv[1].isdigit()):
+        print_help()
+        exit(84)
+    return int(argv[1])
+
+def calculate_function_value(n, x):
+    if x == 0:
+        return 1
+    result = (sin(x) / x)
+    den = 3
+    for _ in range(n):
+        result *= sin(x / den) / (x / den)
+        den += 2
+    return result
+
+def generate_range(start, end=None, increment=None):
+    if end is None:
+        end = start + 0.0
+        start = 0.0
+    if increment is None:
+        increment = 1.0
+    result = []
+    while True:
+        next_value = start + len(result) * increment
+        if (increment > 0 and next_value >= end) or (increment < 0 and next_value <= end):
+            break
+        result.append(next_value)
+    return result
+
+def calculate_midpoint(n):
+    result = 0.0
+    for i in generate_range(0, 5000, 0.5):
+        mid = (i + (i + 0.5)) / 2
+        func_value = calculate_function_value(n, mid)
+        result += func_value * 0.5
+    print("Midpoint:")
+    print("I{} = {:.10f}".format(n, result))
+    print("diff = {:.10f}".format(abs(result - pi/2)))
+    return abs(result - pi/2)
+
+def calculate_trapezoidal(n):
+    result = 0.0
+    for i in generate_range(0, 5000, 0.5):
+        var = (calculate_function_value(n, i) + calculate_function_value(n, i + 0.5)) / 2
+        result += var * 0.5
+    print("\nTrapezoidal:")
+    print("I{} = {:.10f}".format(n, result))
+    print("diff = {:.10f}".format(abs(result - pi/2)))
+    return abs(result - pi/2)
+
+def calculate_simpson(n):
+    result = 0.0
+    for i in generate_range(0, 5000, 0.5):
+        mid = (i + (i + 0.5)) / 2
+        func_value = calculate_function_value(n, mid)
+        simpson_value = ((calculate_function_value(n, i) + calculate_function_value(n, i + 0.5)) + (4 * func_value)) / 6
+        result += simpson_value * 0.5
+    print("\nSimpson:")
+    print("I{} = {:.10f}".format(n, result))
+    print("diff = {:.10f}".format(abs(result - pi/2)))
+    return abs(result - pi/2)
+
+n = check_args()
+res_mid = calculate_midpoint(n)
+res_tra = calculate_trapezoidal(n)
+res_sim = calculate_simpson(n)
+
+results = {"Midpoint": res_mid, "Trapezoidal": res_tra, "Simpson": res_sim}
+smallest_method = min(results, key=results.get)
+
+print("\nMost precise method:")
+print(f"{smallest_method}: {results[smallest_method]:.10f}")
