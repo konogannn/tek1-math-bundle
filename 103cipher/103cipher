@@ -1,0 +1,196 @@
+#!/usr/bin/env python3
+
+from math import *
+import sys
+
+
+##Annex function
+
+def det_mat2x2(matrix):
+    det = (matrix[0][0] * matrix[1][1]) - (matrix[0][1] * matrix[1][0])
+    return det
+
+def cofactor(matrix, i, j):
+    if not (0 <= i < 3) or not (0 <= j < 3):
+        raise ValueError("Indices i and j must be in the range [0, 2]")
+
+    minor_matrix = [row[:j] + row[j+1:] for row in (matrix[:i] + matrix[i+1:])]
+
+    sign = (-1) ** (i + j)
+    cofactor_value = sign * det_mat2x2(minor_matrix)
+
+    return cofactor_value
+
+
+def det_mat3x3(matrix):
+    return (
+        matrix[0][0] * (matrix[1][1] * matrix[2][2] - matrix[1][2] * matrix[2][1]) -
+        matrix[0][1] * (matrix[1][0] * matrix[2][2] - matrix[1][2] * matrix[2][0]) +
+        matrix[0][2] * (matrix[1][0] * matrix[2][1] - matrix[1][1] * matrix[2][0])
+    )
+
+def adjugate_matrix(matrix):
+    n = len(matrix)
+    adjugate = [[cofactor(matrix, i, j) for j in range(n)] for i in range(n)]
+    adjugate_transposed = [list(row) for row in zip(*adjugate)]
+    return adjugate_transposed
+
+def inverse_matrix(matrix):
+    if det_mat3x3(matrix) == 0:
+        raise ValueError("Cannot invert the matrix.")
+
+    det_inv = 1 / det_mat3x3(matrix)
+    adjugate = adjugate_matrix(matrix)
+
+    inv = [[det_inv * adjugate[i][j] for j in range(len(adjugate[0]))] for i in range(len(adjugate))]
+    return inv
+
+##
+
+
+if len(sys.argv) < 2:
+    exit(84)
+
+# Help menu
+if sys.argv[1] == '-h':
+    print("USAGE\n\t./103cipher message key flag\n")
+    print("DESCRIPTION\n\tmessage\ta message, made of ASCII characters")
+    print("\tkey    \tthe encryption key, made of ASCII characters")
+    print("\tflag   \t0 for the message to be encrypted, 1 to be decrypted")
+
+# Error handling
+if len(sys.argv) != 4:
+    exit (84)
+
+if len(sys.argv[1]) == 0 or len(sys.argv[2]) == 0:
+    exit (84)
+
+if sys.argv[3] != '0' and sys.argv[3] != '1':
+   exit (84)
+
+
+str = sys.argv[1]
+key = sys.argv[2]
+flag = int(sys.argv[3])
+
+lenn = len(key)
+f = float(sqrt(lenn))
+dim = int(f)
+if dim != f:
+    dim = dim + 1
+x = 0
+y = 0
+nb = 0
+
+#create an empty matrix
+matrice = [[0] * dim for _ in range(dim)]
+
+#fill matrix
+while nb < len(key):
+    matrice[x][y] = ord(key[nb])
+    if dim == y + 1:
+        x += 1
+        y = 0
+    else :
+        y += 1
+    nb += 1
+
+
+#print matrix
+x = 0
+y = 0
+if flag == 0:
+    print("Key matrix:")
+    for i in range(dim):
+        for i in range(dim - 1):
+            print("%i" %matrice[x][y], end='\t')
+            y += 1
+        print("%i" %matrice[x][y], end='\n')
+        x += 1
+        y = 0
+
+#print inverted matrix
+else:
+    inv_mat = inverse_matrix(matrice)
+    for i in range(dim):
+        for i in range(dim - 1):
+            if round(inv_mat[x][y], 3) == -0:
+                print("0.0", end='\t')
+                y += 1
+            else:
+                print("%.3g" %round(inv_mat[x][y], 3), end='\t')
+                y += 1
+        print("%.3g" %round(inv_mat[x][y], 3), end='\n')
+        x += 1
+        y = 0
+
+#cipher
+if flag == 0:
+    print("\nEncrypted message:")
+    res = 0
+    col = len(str)
+    x = 0
+    y = 0
+    nb = 0
+    while nb < col :
+        if (nb + dim > col) and dim != 1:
+            if col - nb == 1 :
+                for loop in range(dim):
+                    res = res + matrice[0][y] * ord(str[nb])
+                    y += 1
+                    if y == dim:
+                        print("%i" %res, end='')
+                    else :
+                        print("%i" %res, end=' ')
+                    res = 0
+                nb = col
+            else :
+                for loop in range(col - nb):
+                    while x < col - nb :
+                        res = res + matrice[x][y] * ord(str[nb + x])
+                        x += 1
+                    y += 1
+                    if (y == col - nb):
+                        print("%i" %res, end='')
+                    else:
+                        print("%i" %res, end=' ')
+                    x = 0
+                    res = 0
+                y = 0
+                nb += col - nb
+        elif dim == 1:
+            for loop in range(dim):
+                while x < dim:
+                    res = res + matrice[x][y] * ord(str[nb + x])
+                    x += 1
+                y += 1
+                if nb + x == col:
+                    print("%i" %(res), end='')
+                else:
+                    print("%i" %(res), end=' ')
+                x = 0
+                res = 0
+            y = 0
+            nb += dim
+        else:
+            for loop in range(dim):
+                while x < dim:
+                    res = res + matrice[x][y] * ord(str[nb + x])
+                    x += 1
+                y += 1
+                if (nb + x != col) or (y == 1) or (y == dim - 1):
+                    print("%i" %(res), end=' ')
+                else:
+                    print("%i" %(res), end='')
+                x = 0
+                res = 0
+            y = 0
+            nb += dim
+
+#decipher
+if flag == 1:
+    print("\nDecrypted message:")
+
+#
+print()
+
