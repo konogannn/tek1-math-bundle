@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+
+from math import *
+from sys import argv
+from os import path
+
+HELP_FLAG = "-h"
+MAX_PH_VALUE = 15
+STEP_SIZE = 0.1
+
+# Help menu
+def print_help():
+    print("USAGE\n\t./109titration file\n")
+    print("\tfile\ta csv file containing 'vol;ph' lines")
+
+# Check arguments
+def check_args():
+    if len(argv) != 2:
+        print_help()
+        exit(84)
+    if (len(argv) == 2 and HELP_FLAG in argv[1]):
+        print_help()
+        exit(0)
+    if not path.isfile(argv[1]):
+        print("Error: file not found.")
+        exit(84)
+
+# Format file in array
+def format_file():
+    file = open(argv[1], "r")
+    array = file.readlines()
+    file.close()
+    if len(array) < 2:
+        print("Error: invalid file.")
+        exit(84)
+    for i in range(len(array)):
+        array[i] = array[i].replace("\n", "")
+        array[i] = array[i].split(";")
+        if len(array[i]) != 2:
+            print("Error: invalid line: %s" % array[i])
+            exit(84)
+        try:
+            array[i][0] = float(array[i][0])
+            array[i][1] = float(array[i][1])
+        except:
+            print("Error: invalid content: %s" % array[i])
+            exit(84)
+        if array[i][0] < 0 or not (0 <= array[i][1] <= MAX_PH_VALUE):
+            print("Error: invalid value : %s" % array[i])
+            exit(84)
+    return array
+
+# calculate derivative
+def calc_derivative(array):
+    print("Derivative:")
+    derivative = [0]  * len(array)
+    equivalence = 0
+    previous = 0
+    for i in range(1, len(array) - 1):
+        try:
+            alphatav = (array[i][0] - array[i - 1][0]) / (array[i + 1][0] - array[i - 1][0])
+            tav = (array[i + 1][1] - array[i][1]) / (array[i + 1][0] - array[i][0])
+            alphatar = (array[i + 1][0] - array[i][0]) / (array[i + 1][0] - array[i - 1][0])
+            tar = (array[i][1] - array[i - 1][1]) / (array[i][0] - array[i - 1][0])
+            derivative[i] = alphatav * tav + alphatar * tar
+        except ZeroDivisionError:
+            exit(0)
+        if derivative[i] > previous:
+            previous = derivative[i]
+            equivalence = array[i][0]
+        print("%.1f ml -> %.2f" % (array[i][0], derivative[i]))
+    print("\nEquivalence point at %.1f ml\n" % equivalence)
+    return derivative
+
+# calculate second derivative
+def calc_second_derivative(derivative, array):
+    print("Second derivative:")
+    vol = [0] * 3
+    value = [0] * 3
+    new_array = [0] * (len(derivative) - 2)
+    for i in range(2, len(derivative) - 2):
+        try:
+            alphatav = (array[i][0] - array[i - 1][0]) / (array[i + 1][0] - array[i - 1][0])
+            tav = (derivative[i + 1] - derivative[i]) / (array[i + 1][0] - array[i][0])
+            alphatar = (array[i + 1][0] - array[i][0]) / (array[i + 1][0] - array[i - 1][0])
+            tar = (derivative[i] - derivative[i - 1]) / (array[i][0] - array[i - 1][0])
+            new_array[i - 2] = alphatav * tav + alphatar * tar
+        except ZeroDivisionError:
+            exit(0)
+        print("%.1f ml -> %.2f" %(array[i][0], new_array[i - 2]))
+    for i in range(len(new_array) - 3):
+        if new_array[i] >= 0 and new_array[i + 1] < 0:
+            vol[0] = (array[i + 1][0])
+            vol[1] = (array[i + 2][0])
+            vol[2] = (array[i + 3][0])
+            value[0] = (new_array[i - 1])
+            value[1] = (new_array[i])
+            value[2] = (new_array[i + 1])
+    return (vol, value)
+
+# calculate second derivative estimated
+def calc_second_derivative_estimated(vol, value):
+    print("\nSecond derivative estimated:")
+    i = vol[0]
+    equivalent_vol = 0
+    step_count = int((vol[2] - vol[0]) / STEP_SIZE) + 1
+    new_vol = [0] * step_count
+    previous = 1000
+    i = vol[0]
+    for _ in range(0, step_count, 1):
+        new_vol[_] = i
+        i += 0.1
+    for i in range(step_count):
+        try:
+            if new_vol[i] <= vol[1]:
+                coef1 = (new_vol[i] - vol[0]) / (vol[1] - vol[0])
+                coef2 = (vol[1] - new_vol[i]) / (vol[1] - vol[0])
+                derivative = coef1 * value[1] + coef2 * value[0]
+            if new_vol[i] > vol[1]:
+                coef1 = (new_vol[i] - vol[1]) / (vol[2] - vol[1])
+                coef2 = (vol[2] - new_vol[i]) / (vol[2] - vol[1])
+                derivative = coef1 * value[2] + coef2 * value[1]
+        except ZeroDivisionError:
+            exit(0)
+        if (derivative >= 0 and previous < 0) or (derivative < 0 and previous >= 0):
+            equivalent_vol = new_vol[i]
+        previous = derivative
+        print("%.1f ml -> %.2f" % (new_vol[i], derivative))
+    print("\nEquivalence point at %.1f ml" % equivalent_vol)
+
+# main execution
+check_args()
+array = format_file()
+derivative = calc_derivative(array)
+vol, value = calc_second_derivative(derivative, array)
+calc_second_derivative_estimated(vol, value)
