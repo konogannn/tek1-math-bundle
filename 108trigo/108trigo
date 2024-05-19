@@ -1,0 +1,140 @@
+#!/usr/bin/env python3
+
+from math import *
+from sys import argv
+
+def check_args():
+    if len(argv) == 2 and "-h" in argv:
+        print("USAGE")
+        print("\t./08trigo fun a0 a1 a2...")
+        print("\nDESCRIPTION")
+        print("\tfun\tfunction to be applied, among at least “EXP”, “COS”, “SIN”, “COSH” and “SINH”")
+        print("\tai\tcoeficients of the matrix")
+        exit(0)
+    if len(argv) < 3:
+        print("Not enough arguments")
+        exit(84)
+    if argv[1] not in ["EXP", "COS", "SIN", "COSH", "SINH"]:
+        print("Invalid function")
+        exit(84)
+    for i in range(2, len(argv)):
+        try:
+            float(argv[i])
+        except ValueError:
+            print("Invalid argument")
+            exit(84)
+    nbarg = trunc(sqrt(len(argv) - 2))
+    if nbarg ** 2 != len(argv) - 2:
+        print("Invalid amount of arguments")
+        exit(84)
+    return nbarg
+
+def identity_matrix(len):
+    matrix = []
+    for i in range(len):
+        matrix.append([])
+        for j in range(len):
+            matrix[i].append(0)
+        matrix[i][i] = 1
+    return matrix
+
+def mat_add(matrix1, matrix2):
+    result = []
+    for i in range(len(matrix1)):
+        result_tmp = []
+        for j in range(len(matrix1[i])):
+            result_tmp.append(matrix1[i][j] + matrix2[i][j])
+        result.append(result_tmp)
+    return result
+
+def mat_sub(matrix1, matrix2):
+    result = []
+    for i in range(len(matrix1)):
+        result_tmp = []
+        for j in range(len(matrix1[i])):
+            result_tmp.append(matrix1[i][j] - matrix2[i][j])
+        result.append(result_tmp)
+    return result
+
+def mat_mul(matrix1, matrix2):
+    result = []
+    for i in range(len(matrix1)):
+        result_tmp = []
+        for j in range(len(matrix2[0])):
+            value = 0
+            for k in range(len(matrix1[0])):
+                value += matrix1[i][k] * matrix2[k][j]
+            result_tmp.append(value)
+        result.append(result_tmp)
+    return result
+
+def mat_div(matrix, div):
+    for i in range(len(matrix)):
+        for j in range(len(matrix[0])):
+            matrix[i][j] /= div
+    return matrix
+
+def mat_pow(matrix, power):
+    result = matrix
+    for i in range(power - 1):
+        result = mat_mul(result, matrix)
+    return result
+
+def exp_fct(matrix):
+    result = identity_matrix(len(matrix))
+    for i in range(1, 100):
+        result = mat_add(result, mat_div(mat_pow(matrix, i), factorial(i)))
+    return result
+
+def cos_fct(matrix):
+    result = identity_matrix(len(matrix))
+    for i in range(1, 100):
+        if i % 2 == 0:
+            result = mat_add(result, mat_div(mat_pow(matrix, 2 * i), factorial(2 * i)))
+        else:
+            result = mat_sub(result, mat_div(mat_pow(matrix, 2 * i), factorial(2 * i)))
+    return result
+
+def sin_fct(matrix):
+    result = matrix
+    for i in range(1, 100):
+        if i % 2 == 0:
+            result = mat_add(result, mat_div(mat_pow(matrix, 2 * i + 1), factorial(2 * i + 1)))
+        else:
+            result = mat_sub(result, mat_div(mat_pow(matrix, 2 * i + 1), factorial(2 * i + 1)))
+    return result
+
+def cosh_fct(matrix):
+    result = identity_matrix(len(matrix))
+    for i in range(1, 100):
+        result = mat_add(result, mat_div(mat_pow(matrix, 2 * i), factorial(2 * i)))
+    return result
+
+def sinh_fct(matrix):
+    result = matrix
+    for i in range(1, 100):
+        result = mat_add(result, mat_div(mat_pow(matrix, 2 * i + 1), factorial(2 * i + 1)))
+    return result
+
+def process(matrix):
+    keys = ["EXP", "COS", "SIN", "COSH", "SINH"]
+    fcts = [exp_fct, cos_fct, sin_fct, cosh_fct, sinh_fct]
+    for i in range(len(keys)):
+        if argv[1] == keys[i]:
+            matrix = fcts[i](matrix)
+    return matrix
+
+def display_matrix(matrix):
+    for i in range(len(matrix)):
+        for j in range(len(matrix[i])):
+            print("%.2f" % matrix[i][j], end="")
+            print("\t", end="") if j != len(matrix[i]) - 1 else print()
+
+nbarg = check_args()
+matrix = []
+for i in range(nbarg):
+    matrix.append([])
+    for j in range(nbarg):
+        matrix[i].append(int(argv[i * nbarg + j + 2]))
+matrix = process(matrix)
+display_matrix(matrix)
